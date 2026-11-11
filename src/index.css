@@ -1,0 +1,31 @@
+:root {
+  color-scheme: dark;
+  --bg: #111827;
+  --fg: #fafafa;
+  --accent: #22c55e;
+  --card: #1f2937;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  -webkit-text-size-adjust: 100%;
+}
+main {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: calc(env(safe-area-inset-top, 0px) + 1rem) 1rem calc(env(safe-area-inset-bottom, 0px) + 1rem);
+}
+.profiles { display: flex; gap: 0.5rem; }
+.profiles button {
+  flex: 1;
+  padding: 0.75rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: var(--card);
+  color: var(--fg);
+  font-size: 1rem;
+}
+.profiles button[aria-selected='true'] { background: var(--accent); color: #052e16; font-weight: 600; }
