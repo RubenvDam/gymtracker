@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Gym Tracker – Accent preview</title>
+<style>
+  /* ---------- Neutral base (shared by every accent) ---------- */
+  :root {
+    --bg: #f2f2f5;
+    --surface: #ffffff;
+    --surface-2: #ececf1;
+    --text: #0b0b0f;
+    --muted: #6b6b76;
+    --border: #e4e4ea;
+    --positive: #12a150;
+    --shadow: 0 1px 2px rgba(11, 11, 15, 0.04), 0 4px 16px rgba(11, 11, 15, 0.04);
+    color-scheme: light;
+  }
+  :root[data-theme='dark'] {
+    --bg: #000000;
+    --surface: #15151a;
+    --surface-2: #222229;
+    --text: #f5f5f7;
+    --muted: #8e8e99;
+    --border: #26262d;
+    --positive: #2fd27a;
+    --shadow: none;
+    color-scheme: dark;
+  }
+
+  /* ---------- Accents: fill, text-on-fill, and accent-as-text (contrast-safe per theme) ---------- */
+  [data-accent='electric'] { --accent: #2f5bff; --on-accent: #ffffff; --accent-text: #2f5bff; --accent-soft: rgba(47, 91, 255, 0.12); }
+  [data-theme='dark'][data-accent='electric'] { --accent: #4d74ff; --accent-text: #7d9bff; --accent-soft: rgba(77, 116, 255, 0.18); }
+
+  [data-accent='volt'] { --accent: #c8ff2e; --on-accent: #0b0b0f; --accent-text: #4b6b00; --accent-soft: rgba(160, 210, 0, 0.18); }
+  [data-theme='dark'][data-accent='volt'] { --accent-text: #c8ff2e; --accent-soft: rgba(200, 255, 46, 0.14); }
+
+  [data-accent='ember'] { --accent: #ff5a1f; --on-accent: #ffffff; --accent-text: #d6430c; --accent-soft: rgba(255, 90, 31, 0.12); }
+  [data-theme='dark'][data-accent='ember'] { --accent-text: #ff7a47; --accent-soft: rgba(255, 90, 31, 0.18); }
+
+  [data-accent='aurora'] { --accent: linear-gradient(135deg, #7b3cff 0%, #e83e8c 100%); --on-accent: #ffffff; --accent-text: #7b3cff; --accent-soft: rgba(123, 60, 255, 0.12); }
+  [data-theme='dark'][data-accent='aurora'] { --accent-text: #b18cff; --accent-soft: rgba(123, 60, 255, 0.2); }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    transition: background 0.2s, color 0.2s;
+  }
+  .wrap { max-width: 440px; margin: 0 auto; padding: 0 16px calc(env(safe-area-inset-bottom, 0px) + 96px); }
+
+  /* ---------- Preview controls (not part of the app design) ---------- */
+  .controls {
+    position: sticky; top: 0; z-index: 10;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    padding: calc(env(safe-area-inset-top, 0px) + 10px) 16px 10px;
+    border-bottom: 1px dashed var(--border);
+  }
+  .controls .inner { max-width: 440px; margin: 0 auto; display: grid; gap: 8px; }
+  .controls p { margin: 0; font-size: 12px; color: var(--muted); }
+  .seg { display: flex; background: var(--surface-2); border-radius: 12px; padding: 3px; gap: 2px; }
+  .seg button {
+    flex: 1; border: 0; background: none; color: var(--muted); font: inherit; font-size: 13px; font-weight: 600;
+    padding: 8px 4px; border-radius: 9px; display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .seg button[aria-pressed='true'] { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+  .swatch { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+
+  /* ---------- App mock ---------- */
+  .top { display: flex; justify-content: space-between; align-items: center; padding: 20px 0 8px; }
+  .date { font-size: 13px; color: var(--muted); font-weight: 500; }
+  h1 { font-size: 34px; line-height: 1.05; letter-spacing: -0.02em; margin: 2px 0 0; font-weight: 700; }
+  .avatar {
+    width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--surface); box-shadow: var(--shadow); font-weight: 700; font-size: 15px; border: 1px solid var(--border);
+  }
+
+  .week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin: 16px 0 20px; }
+  .day { display: grid; justify-items: center; gap: 6px; font-size: 11px; color: var(--muted); font-weight: 600; }
+  .dot {
+    width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center;
+    font-size: 13px; font-weight: 600; color: var(--text); background: var(--surface); border: 1px solid var(--border);
+  }
+  .dot.done { background: var(--accent); color: var(--on-accent); border-color: transparent; }
+  .dot.today { border: 2px solid var(--text); }
+  .dot.planned { position: relative; }
+  .dot.planned::after {
+    content: ''; position: absolute; bottom: 4px; width: 4px; height: 4px; border-radius: 50%; background: var(--accent-text);
+  }
+  .dot.rest { background: transparent; border-style: dashed; color: var(--muted); }
+
+  .card { background: var(--surface); border-radius: 22px; padding: 20px; box-shadow: var(--shadow); margin-bottom: 12px; border: 1px solid var(--border); }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--accent-text); background: var(--accent-soft); padding: 5px 10px; border-radius: 999px;
+  }
+  .hero h2 { font-size: 28px; letter-spacing: -0.02em; margin: 12px 0 2px; }
+  .hero .sub { color: var(--muted); font-size: 14px; margin: 0 0 14px; }
+  .ex { list-style: none; margin: 0 0 18px; padding: 0; }
+  .ex li { display: flex; justify-content: space-between; padding: 10px 0; border-top: 1px solid var(--border); font-size: 15px; }
+  .ex li span:last-child { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .btn {
+    width: 100%; border: 0; border-radius: 999px; padding: 16px; font: inherit; font-size: 17px; font-weight: 700;
+    background: var(--accent); color: var(--on-accent);
+  }
+  .btn-ghost {
+    width: 100%; border: 0; background: none; color: var(--text); font: inherit; font-size: 15px; font-weight: 600; padding: 12px 0 0;
+  }
+
+  .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .tile { background: var(--surface); border-radius: 20px; padding: 16px; box-shadow: var(--shadow); border: 1px solid var(--border); min-width: 0; }
+  .tile .label { font-size: 13px; color: var(--muted); font-weight: 500; }
+  .tile .big { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; margin-top: 6px; font-variant-numeric: tabular-nums; }
+  .tile .big small { font-size: 15px; font-weight: 600; color: var(--muted); letter-spacing: 0; }
+  .tile .delta { font-size: 13px; font-weight: 600; color: var(--positive); margin-top: 2px; }
+  .bar { height: 6px; border-radius: 999px; background: var(--surface-2); margin-top: 12px; overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 50%; background: var(--accent); border-radius: inherit; }
+  .spark { width: 100%; height: 34px; margin-top: 8px; display: block; }
+  .spark path { fill: none; stroke: var(--accent-text); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+
+  .insight { display: flex; gap: 14px; align-items: center; }
+  .insight .icon { width: 42px; height: 42px; border-radius: 14px; background: var(--accent-soft); color: var(--accent-text); display: grid; place-items: center; flex: none; }
+  .insight b { display: block; font-size: 15px; }
+  .insight span { font-size: 14px; color: var(--muted); }
+
+  .tabbar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
+    background: color-mix(in srgb, var(--surface) 90%, transparent);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid var(--border);
+    padding: 8px 8px calc(env(safe-area-inset-bottom, 0px) + 8px);
+  }
+  .tabbar .inner { max-width: 440px; margin: 0 auto; display: grid; grid-template-columns: repeat(5, 1fr); }
+  .tab { display: grid; justify-items: center; gap: 3px; font-size: 10.5px; font-weight: 600; color: var(--muted); }
+  .tab svg { width: 24px; height: 24px; }
+  .tab.on { color: var(--text); }
+  .tab.on svg { color: var(--accent-text); }
+  [data-accent='volt']:not([data-theme='dark']) .tab.on svg { color: var(--text); }
+
+  .note { font-size: 12px; color: var(--muted); text-align: center; margin: 20px 0 0; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="controls">
+  <div class="inner">
+    <div class="seg" id="accents" role="group" aria-label="Accent colour">
+      <button data-v="electric"><span class="swatch" style="background:#2f5bff"></span>Electric</button>
+      <button data-v="volt"><span class="swatch" style="background:#c8ff2e;outline:1px solid #0002"></span>Volt</button>
+      <button data-v="ember"><span class="swatch" style="background:#ff5a1f"></span>Ember</button>
+      <button data-v="aurora"><span class="swatch" style="background:linear-gradient(135deg,#7b3cff,#e83e8c)"></span>Aurora</button>
+    </div>
+    <div class="seg" id="themes" role="group" aria-label="Theme">
+      <button data-v="light">Light</button>
+      <button data-v="dark">Dark</button>
+    </div>
+    <p id="desc"></p>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="top">
+    <div>
+      <div class="date">Wednesday 25 November</div>
+      <h1>Today</h1>
+    </div>
+    <div class="avatar" aria-label="Profile">Y</div>
+  </div>
+
+  <div class="week" aria-label="This week">
+    <div class="day">M<div class="dot done">✓</div></div>
+    <div class="day">T<div class="dot done">✓</div></div>
+    <div class="day">W<div class="dot today planned">25</div></div>
+    <div class="day">T<div class="dot planned">26</div></div>
+    <div class="day">F<div class="dot planned">27</div></div>
+    <div class="day">S<div class="dot rest">28</div></div>
+    <div class="day">S<div class="dot rest">29</div></div>
+  </div>
+
+  <section class="card hero">
+    <span class="pill">● Planned · Strength</span>
+    <h2>Upper – Strength</h2>
+    <p class="sub">5 exercises · ~60 min</p>
+    <ul class="ex">
+      <li><span>Bench press</span><span>4 × 4–6</span></li>
+      <li><span>Weighted pull-up</span><span>4 × 4–6</span></li>
+      <li><span>Overhead press</span><span>3 × 5–8</span></li>
+    </ul>
+    <button class="btn">Start session</button>
+    <button class="btn-ghost">Quick log instead</button>
+  </section>
+
+  <div class="tiles">
+    <div class="tile">
+      <div class="label">This week</div>
+      <div class="big">2<small> / 4</small></div>
+      <div class="bar"><i></i></div>
+    </div>
+    <div class="tile">
+      <div class="label">Working sets</div>
+      <div class="big">38</div>
+      <div class="delta">+6 vs last week</div>
+    </div>
+    <div class="tile">
+      <div class="label">Bench e1RM</div>
+      <div class="big">92.5<small> kg</small></div>
+      <svg class="spark" viewBox="0 0 100 34" preserveAspectRatio="none" aria-hidden="true"><path d="M2 28 L18 25 L34 26 L50 19 L66 17 L82 11 L98 6" /></svg>
+    </div>
+    <div class="tile">
+      <div class="label">Relative strength</div>
+      <div class="big">1.14<small> × BW</small></div>
+      <div class="delta">▲ 0.03</div>
+    </div>
+  </div>
+
+  <section class="card insight">
+    <div class="icon" aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
+    </div>
+    <div>
+      <b>Under-trained this week</b>
+      <span>Hamstrings · Rear delts</span>
+    </div>
+  </section>
+
+  <p class="note">Preview only: sample data, not your real stats.<br />Compare how each accent pulls your eye to the Start button.</p>
+</div>
+
+<nav class="tabbar" aria-label="Main">
+  <div class="inner">
+    <div class="tab on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Today</div>
+    <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Plan</div>
+    <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Log</div>
+    <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V10M10 19V5M16 19v-7M22 19H2"/></svg>Progress</div>
+    <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>Profile</div>
+  </div>
+</nav>
+
+<script>
+  const DESC = {
+    electric: 'Electric blue: fintech-trustworthy, calm but crisp. Strong on both themes.',
+    volt: 'Volt lime: sporty, very high attention on dark (Whoop/Nike energy). Needs dark text on top.',
+    ember: 'Ember orange: warm and energetic, signals action/urgency. Warmest attention-grabber.',
+    aurora: 'Aurora gradient: playful and premium. Most distinctive, slightly busier.',
+  }
+  const root = document.documentElement
+  const prefersDark = matchMedia('(prefers-color-scheme: dark)').matches
+  const state = { accent: 'electric', theme: prefersDark ? 'dark' : 'light' }
+
+  function apply() {
+    root.dataset.accent = state.accent
+    root.dataset.theme = state.theme
+    for (const b of document.querySelectorAll('#accents button')) b.setAttribute('aria-pressed', b.dataset.v === state.accent)
+    for (const b of document.querySelectorAll('#themes button')) b.setAttribute('aria-pressed', b.dataset.v === state.theme)
+    document.getElementById('desc').textContent = DESC[state.accent]
+  }
+  document.getElementById('accents').addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (b) { state.accent = b.dataset.v; apply() }
+  })
+  document.getElementById('themes').addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (b) { state.theme = b.dataset.v; apply() }
+  })
+  apply()
+</script>
+</body>
+</html>
