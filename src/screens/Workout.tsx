@@ -5,7 +5,10 @@ import { addExercise, discardWorkout, finishWorkout, startWorkout } from '../db/
 import { useProfile } from '../profileContext'
 import { primeAudio } from '../lib/beep'
 import { usePersisted, useNow } from '../lib/hooks'
-import { fmtClock } from '../lib/format'
+import { fmtClock, plural } from '../lib/format'
+import { relativeDay } from '../lib/dates'
+import PageHeader from '../components/PageHeader'
+import Icon from '../components/Icon'
 import ExerciseCard from '../components/ExerciseCard'
 import ExercisePicker from '../components/ExercisePicker'
 import RestTimer from '../components/RestTimer'
@@ -29,30 +32,37 @@ function Start({ profileId }: { profileId: number }) {
       const done = (await db.workouts.where('profileId').equals(profileId).filter((w) => !!w.finishedAt).toArray())
         .sort((a, b) => b.startedAt - a.startedAt)
         .slice(0, 5)
-      return Promise.all(
-        done.map(async (w) => ({ w, sets: await db.sets.where('workoutId').equals(w.id).count() })),
-      )
+      return Promise.all(done.map(async (w) => ({ w, sets: await db.sets.where('workoutId').equals(w.id).count() })))
     },
     [profileId],
     [],
   )
   return (
-    <section>
-      <button className="primary big" onClick={() => startWorkout(profileId)}>Start workout</button>
+    <>
+      <PageHeader eyebrow="Log" title="Workout" />
+      <section className="card hero">
+        <span className="pill neutral">Quick log</span>
+        <h2>Start a workout</h2>
+        <p className="sub">Add exercises as you go. Preset routines from your plan arrive next.</p>
+        <button className="btn" onClick={() => startWorkout(profileId)}>Start workout</button>
+      </section>
       {recent.length > 0 && (
         <>
-          <h2>Recent</h2>
-          <ul className="list">
+          <h2 className="section">Recent</h2>
+          <div className="group">
             {recent.map(({ w, sets }) => (
-              <li key={w.id} className="recent">
-                <span>{new Date(w.startedAt).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}</span>
-                <span className="muted">{w.exerciseIds.length} exercises · {sets} sets</span>
-              </li>
+              <div key={w.id} className="group-row recent">
+                <span className="two-line">
+                  <span className="name">{new Date(w.startedAt).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short' })}</span>
+                  <span className="sub">{relativeDay(w.startedAt)}</span>
+                </span>
+                <span className="meta">{plural(w.exerciseIds.length, 'exercise')} · {plural(sets, 'set')}</span>
+              </div>
             ))}
-          </ul>
+          </div>
         </>
       )}
-    </section>
+    </>
   )
 }
 
@@ -95,47 +105,63 @@ function ActiveWorkout({ workout }: { workout: Workout }) {
     )
   }
 
-  return (
-    <section>
-      <div className="row between">
-        <h2>Workout</h2>
-        <span className="muted">{Math.floor((now - workout.startedAt) / 60000)} min · {setCount} sets</span>
-      </div>
+  const minutes = Math.floor((now - workout.startedAt) / 60000)
 
-      <div className="rest-settings">
-        <label className="check">
-          <input type="checkbox" checked={auto} onChange={(e) => { setAuto(e.target.checked); if (e.target.checked) primeAudio() }} />
-          Auto-start rest timer
+  return (
+    <>
+      <PageHeader eyebrow={`In progress · ${minutes} min · ${setCount} sets`} title="Workout" />
+
+      <section className="card rest-card">
+        <span className="row-icon"><Icon name="timer" size={20} /></span>
+        <span className="two-line">
+          <span className="name">Rest timer</span>
+          <span className="sub">Auto-start after each set</span>
+        </span>
+        <label className="switch">
+          <input
+            type="checkbox"
+            role="switch"
+            aria-label="Auto-start rest timer"
+            checked={auto}
+            onChange={(e) => {
+              setAuto(e.target.checked)
+              if (e.target.checked) primeAudio()
+            }}
+          />
         </label>
-        <select aria-label="Rest duration" value={restSec} onChange={(e) => setRestSec(Number(e.target.value))}>
-          {REST_OPTIONS.map((s) => <option key={s} value={s}>{fmtClock(s)}</option>)}
-        </select>
-        <button className="chip" onClick={startRest}>Start now</button>
-      </div>
+        <div className="controls">
+          <select aria-label="Rest duration" value={restSec} onChange={(e) => setRestSec(Number(e.target.value))}>
+            {REST_OPTIONS.map((s) => <option key={s} value={s}>{fmtClock(s)} rest</option>)}
+          </select>
+          <button className="btn secondary inline" onClick={startRest}>Start now</button>
+        </div>
+      </section>
 
       {exercises.map((e) => (
         <ExerciseCard key={e.id} workout={workout} exercise={e} onLogged={onLogged} />
       ))}
 
-      <button className="primary big" onClick={() => setPicking(true)}>+ Add exercise</button>
+      {exercises.length === 0 && <p className="empty">Add your first exercise to start logging.</p>}
 
-      <div className="row finish">
+      <button className="btn secondary" onClick={() => setPicking(true)}>+ Add exercise</button>
+
+      <div className="btn-row" style={{ marginTop: 24 }}>
         {confirm === 'discard' ? (
           <>
-            <button className="danger grow" onClick={() => discardWorkout(workout.id)}>Yes, discard everything</button>
-            <button className="chip" onClick={() => setConfirm(null)}>Cancel</button>
+            <button className="btn danger" onClick={() => discardWorkout(workout.id)}>Yes, discard everything</button>
+            <button className="btn secondary inline" onClick={() => setConfirm(null)}>Cancel</button>
           </>
         ) : confirm === 'finish' ? (
           <>
-            <button className="primary grow" onClick={() => finishWorkout(workout.id)}>Yes, finish ({setCount} sets)</button>
-            <button className="chip" onClick={() => setConfirm(null)}>Cancel</button>
+            <button className="btn" onClick={() => finishWorkout(workout.id)}>Yes, finish ({setCount} sets)</button>
+            <button className="btn secondary inline" onClick={() => setConfirm(null)}>Cancel</button>
           </>
         ) : (
           <>
-            <button className="primary grow" onClick={() => setConfirm(setCount > 0 ? 'finish' : 'discard')}>
+            <button className="btn" onClick={() => setConfirm(setCount > 0 ? 'finish' : 'discard')}>
               {setCount > 0 ? 'Finish workout' : 'Cancel workout'}
             </button>
-            {setCount > 0 && <button className="danger" onClick={() => setConfirm('discard')}>Discard</button>}
+            {setCount > 0 && <button className="btn danger inline" onClick={() => setConfirm('discard')}>Discard</button>}
           </>
         )}
       </div>
@@ -146,6 +172,6 @@ function ActiveWorkout({ workout }: { workout: Workout }) {
           <RestTimer endsAt={restEndsAt} onChange={setRestEndsAt} />
         </>
       )}
-    </section>
+    </>
   )
 }

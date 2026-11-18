@@ -36,8 +36,8 @@ export default function RestTimer({ endsAt, onChange }: Props) {
 
   return (
     <div className={over ? 'rest over' : 'rest'} role="timer" aria-live="off">
-      <button onClick={sub15} aria-label="Subtract 15 seconds">−15</button>
       <strong>{over ? 'Go!' : fmtClock(remaining)}</strong>
+      <button onClick={sub15} aria-label="Subtract 15 seconds">−15</button>
       <button onClick={add15} aria-label="Add 15 seconds">+15</button>
       <button onClick={() => onChange(null)}>Skip</button>
     </div>

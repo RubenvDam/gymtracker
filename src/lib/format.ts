@@ -2,6 +2,9 @@ import type { LogType, SetEntry } from '../db/db'
 
 export const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
+/** plural(1, 'set') → "1 set", plural(3, 'set') → "3 sets" */
+export const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
+
 /** Accepts "62.5" and "62,5" (decimal-comma keyboards). Returns undefined for blank/invalid. */
 export function parseNum(s: string): number | undefined {
   const t = s.trim().replace(',', '.')

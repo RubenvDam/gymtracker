@@ -1,45 +1,62 @@
 import { useEffect, useState } from 'react'
 import { ProfileProvider } from './profile'
-import { useProfile } from './profileContext'
 import { seedExercises } from './db/db'
-import Library from './screens/Library'
+import { applyAppearance, loadAppearance } from './lib/theme'
+import Icon, { type IconName } from './components/Icon'
+import Today from './screens/Today'
 import WorkoutScreen from './screens/Workout'
-import Profiles from './screens/Profiles'
+import Progress from './screens/Progress'
+import ProfileScreen from './screens/Profile'
 
-type Tab = 'workout' | 'library' | 'profiles'
+type Tab = 'today' | 'log' | 'progress' | 'profile'
+
+const TABS: { id: Tab; label: string; icon: IconName }[] = [
+  { id: 'today', label: 'Today', icon: 'today' },
+  { id: 'log', label: 'Log', icon: 'log' },
+  { id: 'progress', label: 'Progress', icon: 'progress' },
+  { id: 'profile', label: 'Profile', icon: 'profile' },
+]
 
 function Shell() {
-  const { profiles, active, setActiveId } = useProfile()
-  const [tab, setTab] = useState<Tab>('workout')
+  const [tab, setTab] = useState<Tab>('today')
   const [seedError, setSeedError] = useState<string | null>(null)
 
   useEffect(() => {
     seedExercises().catch((e) => setSeedError(String(e.message ?? e)))
   }, [])
 
+  // Follow the phone's light/dark switch when the theme is set to "System".
+  useEffect(() => {
+    const mq = matchMedia('(prefers-color-scheme: dark)')
+    const onChange = () => applyAppearance(loadAppearance())
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
+
+  const go = (t: Tab) => {
+    setTab(t)
+    window.scrollTo(0, 0)
+  }
+
   return (
     <>
-      <header>
-        <div className="profiles" role="tablist" aria-label="Active profile">
-          {profiles.map((p) => (
-            <button key={p.id} role="tab" aria-selected={p.id === active?.id} onClick={() => setActiveId(p.id)}>
-              {p.name}
+      <div className="statusbar-shim" />
+      <main className="page">
+        {seedError && <p className="error">{seedError}. Connect to the internet once to load the exercise library.</p>}
+        {tab === 'today' && <Today onOpenLog={() => go('log')} onOpenProgress={() => go('progress')} />}
+        {tab === 'log' && <WorkoutScreen />}
+        {tab === 'progress' && <Progress />}
+        {tab === 'profile' && <ProfileScreen />}
+      </main>
+      <nav className="tabbar" aria-label="Main">
+        <div className="tabbar-inner">
+          {TABS.map((t) => (
+            <button key={t.id} className={tab === t.id ? 'tab on' : 'tab'} aria-current={tab === t.id ? 'page' : undefined} onClick={() => go(t.id)}>
+              <Icon name={t.icon} />
+              {t.label}
             </button>
           ))}
         </div>
-      </header>
-      <main>
-        {seedError && <p className="error">{seedError}. Connect to the internet once to load the exercise library.</p>}
-        {tab === 'workout' && <WorkoutScreen />}
-        {tab === 'library' && <Library />}
-        {tab === 'profiles' && <Profiles />}
-      </main>
-      <nav className="tabbar">
-        {(['workout', 'library', 'profiles'] as Tab[]).map((t) => (
-          <button key={t} aria-current={tab === t} onClick={() => setTab(t)}>
-            {t === 'workout' ? 'Workout' : t === 'library' ? 'Library' : 'Profiles'}
-          </button>
-        ))}
       </nav>
     </>
   )

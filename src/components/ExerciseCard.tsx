@@ -4,6 +4,7 @@ import { db, type Exercise, type SetEntry, type Workout } from '../db/db'
 import { deleteSet, logSet, removeExercise, suggestNext } from '../db/workouts'
 import { cap, describeSet, fmtNum, parseNum } from '../lib/format'
 import Stepper from './Stepper'
+import Icon from './Icon'
 
 interface Props {
   workout: Workout
@@ -68,30 +69,32 @@ export default function ExerciseCard({ workout, exercise, onLogged }: Props) {
   let n = 0
   return (
     <article className="card">
-      <div className="card-head">
-        <div>
+      <div className="ex-head">
+        <div className="grow">
           <h3>{exercise.name}</h3>
-          <span className="muted">{exercise.primaryMuscles.map(cap).join(', ')}</span>
+          <span className="sub">{exercise.primaryMuscles.map(cap).join(', ')}</span>
         </div>
         {confirmRemove ? (
-          <button className="danger small" onClick={() => removeExercise(workout.id, exercise.id)}>Remove + its sets?</button>
+          <button className="btn-text danger" onClick={() => removeExercise(workout.id, exercise.id)}>Remove + its sets?</button>
         ) : (
-          <button className="link small" onClick={() => setConfirmRemove(true)} aria-label={`Remove ${exercise.name}`}>Remove</button>
+          <button className="btn-text muted" onClick={() => setConfirmRemove(true)} aria-label={`Remove ${exercise.name}`}>Remove</button>
         )}
       </div>
 
-      <ol className="sets">
-        {sets.map((st) => {
-          if (st.type === 'working') n += 1
-          return (
-            <li key={st.id}>
-              <span className={st.type === 'warmup' ? 'tag warm' : 'tag'}>{st.type === 'warmup' ? 'W' : n}</span>
-              <span className="grow">{describeSet(logType, st)}</span>
-              <button className="x" aria-label="Delete set" onClick={() => deleteSet(st.id)}>×</button>
-            </li>
-          )
-        })}
-      </ol>
+      {sets.length > 0 && (
+        <ol className="sets">
+          {sets.map((st) => {
+            if (st.type === 'working') n += 1
+            return (
+              <li key={st.id}>
+                <span className={st.type === 'warmup' ? 'tag warm' : 'tag'}>{st.type === 'warmup' ? 'W' : n}</span>
+                <span className="grow">{describeSet(logType, st)}</span>
+                <button className="x" aria-label="Delete set" onClick={() => deleteSet(st.id)}><Icon name="close" size={18} /></button>
+              </li>
+            )
+          })}
+        </ol>
+      )}
 
       <div className="entry">
         {logType === 'weight_reps' && (
@@ -112,9 +115,9 @@ export default function ExerciseCard({ workout, exercise, onLogged }: Props) {
             <Stepper label="Added kg (optional)" value={weight} onChange={setWeight} step={2.5} decimal />
           </div>
         )}
-        <div className="row">
-          <button type="button" className={warmup ? 'chip on' : 'chip'} aria-pressed={warmup} onClick={() => setWarmup(!warmup)}>Warm-up</button>
-          <button className="primary grow" onClick={submit} disabled={!valid}>Log set</button>
+        <div className="entry-actions">
+          <button type="button" className={warmup ? 'chip warm-on' : 'chip'} aria-pressed={warmup} onClick={() => setWarmup(!warmup)}>Warm-up</button>
+          <button className="btn" onClick={submit} disabled={!valid}>Log set</button>
         </div>
       </div>
     </article>

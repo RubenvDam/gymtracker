@@ -15,6 +15,13 @@ Vite + React + TypeScript, Dexie (IndexedDB), vite-plugin-pwa. Hosted on a free 
 - Mobile-first, one-handed, minimal taps; test at ~400px width.
 - Keep components small; no new dependencies without a reason.
 
+## Design system
+- All colours are CSS tokens in `src/index.css`; never hard-code colours in components. Theme (`data-theme`) and accent (`data-accent`) are attributes on `<html>`, managed by `src/lib/theme.ts` and a pre-paint script in `index.html` (keep the two in sync).
+- `--accent` may be a gradient (Aurora): use it only as `background`. Use `--accent-solid` for borders/controls and `--accent-text` for accent-coloured text.
+- Building blocks: `PageHeader` (large title + profile avatar/switcher), `.card`, `.hero`, `.tiles/.tile`, `.group/.group-row` (grouped lists), `.btn` (+ `.secondary`, `.danger`, `.inline`), `.btn-text`, `.chip`, `.seg`, `.switch`, `Icon`.
+- Use the accent sparingly: primary action, active state, highlights. Everything else neutral.
+- Pluralise counts with `plural()`.
+
 ## Commands
 - `npm run dev` – dev server (add `-- --host` to open it from a phone on the same Wi-Fi)
 - `npm run build` – typecheck (`tsc -b`) + production build into `dist/`

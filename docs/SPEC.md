@@ -1,7 +1,20 @@
 # Gym Tracker – Spec
 
+## Vision: the best gym buddy
+1. **Effortless logging.** Pop it open between sets and log in seconds. Spontaneous sets and planned routines are equally easy.
+2. **Accountability.** Knows your plan, shows what's due today and how your week is going, without nagging.
+3. **Visible progress (just as important).** Motivates you to keep going: "your bench press is up 10 kg", personal bests, achievements, insights, body progress.
+
+Every feature should serve one of these three. Long term (not now): import from InBody, Garmin, Apple Health; keep the data model open to external measurement sources.
+
 ## Goal
 A personal gym tracker, installed on iPhone as a PWA. Log sets fast at the gym, then see progression and which muscles are under-trained. Used by the owner and a workout buddy on the same phone.
+
+## Navigation
+- **Today**: week strip, today's planned session (when a plan exists), start/continue, weekly stats.
+- **Log**: quick workout or (later) start from a preset routine; active workout screen.
+- **Progress**: personal bests, "since you started" deltas; later insights, body map, charts, achievements.
+- **Profile**: routines + weekly schedule (plan builder), body metrics, exercise library, profiles, appearance settings.
 
 ## Principles
 - Offline-first, all data on-device (IndexedDB). No backend, no accounts.
@@ -37,8 +50,10 @@ Principle: the plan is a suggestion layer, never a gate. Quick (unplanned) worko
 - Each template has a **focus**: `strength` (heavy, low reps, long rest) or `volume` (moderate/high reps). Focus sets defaults for new items (strength ≈ 4 × 4–6, 3 min rest; volume ≈ 3 × 8–12, 90 s rest), all editable.
 - Template item: exercise, target sets, rep range (or duration range), optional rest override.
 - **Weekly schedule** on fixed weekdays (e.g. Mon Upper-S, Tue Lower-S, Thu Upper-V, Fri Lower-V). Missed sessions are never punished: "move to today" or skip.
+- **Built in Profile** ("Routines & weekly plan"): create routines, give them a name and label (e.g. focus), assign to weekdays.
 - **Calendar**: week strip on Today + month view; shows planned, done, missed and unplanned workouts.
-- **Today screen**: today's planned session → Start; always a "Quick log" alternative. A quick workout can be linked to a planned session afterwards.
+- **Today screen**: aligned to the schedule: today's planned session → Start; always a "Quick log" alternative. A quick workout can be linked to a planned session afterwards.
+- **Log**: pick one of your preset routines, or quick log.
 - Starting from a template preloads exercises with targets shown per set.
 - **Progression hints** (double progression): all working sets at top of rep range → suggest next weight (+2.5 kg upper / +5 kg lower, editable). Volume days: reps first, then weight.
 - Plans are per profile. "Copy plan from another profile" so a buddy following the same plan sets up in one tap.
@@ -52,9 +67,9 @@ Principle: the plan is a suggestion layer, never a gate. Quick (unplanned) worko
 
 ## Design
 - Inspired by fintech apps like Revolut (feel only, no copied branding): neutral greys, lots of whitespace, big bold numbers, rounded cards, pill buttons, stat tiles with sparklines, short copy.
-- One saturated accent used sparingly against neutrals (contrast + isolation draws the eye). Accent chosen from a preview (`public/preview.html`).
-- Light + dark, following the phone setting. System font (SF Pro on iPhone).
-- Navigation: Today · Plan · Log · Progress · Profile.
+- One saturated accent used sparingly against neutrals (contrast + isolation draws the eye).
+- Appearance is a setting (Profile → Appearance): theme Light / Dark / System, accent Electric / Volt / Ember / Aurora. **Default: Light + Aurora.** Stored per device.
+- System font (SF Pro on iPhone).
 
 ## Insights (later milestones)
 - Weekly working sets per muscle vs 10–20 target; flag under-trained muscles.
@@ -76,8 +91,8 @@ Principle: the plan is a suggestion layer, never a gate. Quick (unplanned) worko
 1. Scaffold: git, docs, Vite+React+TS PWA, installable on iPhone, deployed. ✅ done
 2. Exercise library + profiles. ✅ done
 3. Workout logging (3 log types) + prefill. ✅ done
-4. Design system + restyle + new navigation (Today · Plan · Log · Progress · Profile).
-5. Plans: templates with focus, weekly schedule, calendar, start from plan, progression hints, copy plan.
+4. Design system + restyle + new navigation (Today · Log · Progress · Profile) + appearance settings + first personal-bests view. ✅ done
+5. Plans (built under Profile): routines with label/focus, weekly schedule, calendar, start from routine in Log, Today aligned to schedule, progression hints, copy plan.
 6. Profile metrics: baseline, bodyweight log, BMI, relative strength.
 7. History + export/import.
 8. Insights: weekly sets per muscle + body map.
