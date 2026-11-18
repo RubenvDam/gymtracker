@@ -32,9 +32,38 @@ export interface Exercise {
   custom: boolean
 }
 
+export type SetType = 'warmup' | 'working'
+
+export interface Workout {
+  id: number
+  profileId: number
+  name: string
+  startedAt: number
+  /** Unset while the workout is in progress. */
+  finishedAt?: number
+  /** Exercises in the order they were added. */
+  exerciseIds: string[]
+}
+
+export interface SetEntry {
+  id: number
+  workoutId: number
+  profileId: number
+  exerciseId: string
+  order: number
+  type: SetType
+  /** Load in kg. For bodyweight/duration exercises this is optional added weight. */
+  weightKg?: number
+  reps?: number
+  durationSec?: number
+  completedAt: number
+}
+
 export const db = new Dexie('gymtracker') as Dexie & {
   profiles: EntityTable<Profile, 'id'>
   exercises: EntityTable<Exercise, 'id'>
+  workouts: EntityTable<Workout, 'id'>
+  sets: EntityTable<SetEntry, 'id'>
 }
 
 db.version(1).stores({
@@ -44,6 +73,13 @@ db.version(1).stores({
 db.version(2).stores({
   profiles: '++id, name',
   exercises: 'id, name, logType, *primaryMuscles',
+})
+
+db.version(3).stores({
+  profiles: '++id, name',
+  exercises: 'id, name, logType, *primaryMuscles',
+  workouts: '++id, profileId, startedAt',
+  sets: '++id, workoutId, [profileId+exerciseId]',
 })
 
 export async function ensureDefaultProfiles() {

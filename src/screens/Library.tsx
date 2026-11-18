@@ -1,18 +1,13 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db, seedExercises, MUSCLES, LOG_TYPE_LABELS, type Exercise, type LogType, type Muscle } from '../db/db'
+import { db, MUSCLES, LOG_TYPE_LABELS, type Exercise, type LogType, type Muscle } from '../db/db'
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
 export default function Library() {
-  const [seedError, setSeedError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
   const [muscle, setMuscle] = useState<Muscle | null>(null)
   const [editing, setEditing] = useState<Exercise | 'new' | null>(null)
-
-  useEffect(() => {
-    seedExercises().catch((e) => setSeedError(String(e.message ?? e)))
-  }, [])
 
   const all = useLiveQuery(() => db.exercises.orderBy('name').toArray(), [], [] as Exercise[])
 
@@ -49,7 +44,6 @@ export default function Library() {
         ))}
       </div>
 
-      {seedError && <p className="error">{seedError}. Connect to the internet once to load the library.</p>}
       <p className="muted">{shown.length} exercises</p>
 
       <ul className="list">

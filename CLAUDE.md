@@ -9,7 +9,9 @@ Vite + React + TypeScript, Dexie (IndexedDB), vite-plugin-pwa. Hosted on a free 
 - Offline-first, no backend. All persistence goes through Dexie in `src/db/`.
 - Logged data (workouts, sets, bodyweight, templates) has a `profileId`; always filter by the active profile. The exercise library is shared across profiles.
 - Exercise library seeds from `public/exercises.json` (built by `scripts/build-exercises.mjs` from free-exercise-db, Unlicense). Seeding never overwrites rows, so user edits survive. IndexedDB can't index booleans: don't add indexes on boolean fields.
-- Weights in kg. Store durations in seconds.
+- Weights in kg. Store durations in seconds. Number inputs are strings in state; parse with `parseNum` (accepts decimal comma).
+- One unfinished workout (`finishedAt` unset) per profile. Prefill logic lives in `suggestNext` (`src/db/workouts.ts`); only working sets count.
+- Lint rules reject setState-in-effect and `Date.now()` in render: mount time-driven components only while needed (see `RestTimer`).
 - Mobile-first, one-handed, minimal taps; test at ~400px width.
 - Keep components small; no new dependencies without a reason.
 

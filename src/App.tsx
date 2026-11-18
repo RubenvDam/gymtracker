@@ -1,14 +1,21 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ProfileProvider } from './profile'
 import { useProfile } from './profileContext'
+import { seedExercises } from './db/db'
 import Library from './screens/Library'
+import WorkoutScreen from './screens/Workout'
 import Profiles from './screens/Profiles'
 
 type Tab = 'workout' | 'library' | 'profiles'
 
 function Shell() {
   const { profiles, active, setActiveId } = useProfile()
-  const [tab, setTab] = useState<Tab>('library')
+  const [tab, setTab] = useState<Tab>('workout')
+  const [seedError, setSeedError] = useState<string | null>(null)
+
+  useEffect(() => {
+    seedExercises().catch((e) => setSeedError(String(e.message ?? e)))
+  }, [])
 
   return (
     <>
@@ -22,7 +29,8 @@ function Shell() {
         </div>
       </header>
       <main>
-        {tab === 'workout' && <p className="muted">Workout logging comes in milestone 3.</p>}
+        {seedError && <p className="error">{seedError}. Connect to the internet once to load the exercise library.</p>}
+        {tab === 'workout' && <WorkoutScreen />}
         {tab === 'library' && <Library />}
         {tab === 'profiles' && <Profiles />}
       </main>

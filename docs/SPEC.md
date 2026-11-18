@@ -27,7 +27,8 @@ A personal gym tracker, installed on iPhone as a PWA. Log sets fast at the gym, 
 - Session = date + ordered exercises, each with sets.
 - Set: `type` (warmup | working), values per log type, optional RPE/RIR, optional note.
 - Prefill weight/reps from the last session of the same exercise.
-- Rest timer.
+- Rest timer: optional. Off by default; toggle to auto-start after each logged set, or start manually. Duration selectable (1–5 min), settings remembered.
+- Input: typed numbers plus ± buttons (2.5 kg, 1 rep, 5 s). Decimal comma accepted.
 
 ## Templates (upper/lower split)
 - Upper A, Lower A, Upper B, Lower B (user-editable).
@@ -45,14 +46,14 @@ A personal gym tracker, installed on iPhone as a PWA. Log sets fast at the gym, 
 - Profile { id, name }
 - Exercise { id, name, logType, primaryMuscles[], secondaryMuscles[], equipment, custom }
 - Template { id, profileId, name, items[{ exerciseId, targetSets, repMin, repMax }] }
-- Workout { id, profileId, date, templateId?, notes }
-- SetEntry { id, workoutId, exerciseId, order, type, weightKg?, reps?, durationSec?, rpe?, note? }
+- Workout { id, profileId, name, startedAt, finishedAt?, exerciseIds[], templateId? } (finishedAt unset = in progress; one per profile)
+- SetEntry { id, workoutId, profileId, exerciseId, order, type, weightKg?, reps?, durationSec?, completedAt, rpe?, note? }
 - BodyweightEntry { id, profileId, date, kg }
 
 ## Milestones
 1. Scaffold: git, docs, Vite+React+TS PWA, installable on iPhone, deployed. ✅ done
 2. Exercise library + profiles. ✅ done
-3. Workout logging (3 log types) + prefill.
+3. Workout logging (3 log types) + prefill. ✅ done (empty workouts only; templates are milestone 4)
 4. Upper/lower templates.
 5. History + export/import. ← first usable version
 6. Insights: weekly sets per muscle + body map.
