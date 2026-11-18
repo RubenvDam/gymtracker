@@ -40,9 +40,9 @@ function Shell() {
     if (t === 'profile') setProfileView('main') // tapping the tab returns to its root
     window.scrollTo(0, 0)
   }
-  const openPlan = () => {
+  const openRegime = () => {
     setTab('profile')
-    setProfileView('plan')
+    setProfileView('regime')
     window.scrollTo(0, 0)
   }
 
@@ -51,8 +51,8 @@ function Shell() {
       <div className="statusbar-shim" />
       <main className="page">
         {seedError && <p className="error">{seedError}. Connect to the internet once to load the exercise library.</p>}
-        {tab === 'today' && <Today onOpenLog={() => go('log')} onOpenProgress={() => go('progress')} onOpenPlan={openPlan} />}
-        {tab === 'log' && <WorkoutScreen onOpenPlan={openPlan} />}
+        {tab === 'today' && <Today onOpenLog={() => go('log')} onOpenProgress={() => go('progress')} onOpenRegime={openRegime} />}
+        {tab === 'log' && <WorkoutScreen onOpenRegime={openRegime} />}
         {tab === 'progress' && <Progress />}
         {tab === 'profile' && <ProfileScreen view={profileView} onView={setProfileView} />}
       </main>

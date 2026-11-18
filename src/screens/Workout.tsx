@@ -1,8 +1,7 @@
 import { useCallback, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db, type Exercise, type Routine, type Workout } from '../db/db'
-import { addExercise, discardWorkout, finishWorkout, startWorkout } from '../db/workouts'
-import { startFromRoutine, swapVariant, weekdayIndex } from '../db/routines'
+import { db, type Exercise, type Workout } from '../db/db'
+import { addExercise, discardWorkout, finishWorkout, replaceExercise } from '../db/workouts'
 import { useProfile } from '../profileContext'
 import { primeAudio } from '../lib/beep'
 import { usePersisted, useNow } from '../lib/hooks'
@@ -13,8 +12,9 @@ import Icon from '../components/Icon'
 import ExerciseCard from '../components/ExerciseCard'
 import ExercisePicker from '../components/ExercisePicker'
 import RestTimer from '../components/RestTimer'
+import WorkoutChooser from '../components/WorkoutChooser'
 
-export default function WorkoutScreen({ onOpenPlan }: { onOpenPlan: () => void }) {
+export default function WorkoutScreen({ onOpenRegime }: { onOpenRegime: () => void }) {
   const { active } = useProfile()
   const state = useLiveQuery(
     async () => ({
@@ -27,12 +27,11 @@ export default function WorkoutScreen({ onOpenPlan }: { onOpenPlan: () => void }
   return state.workout ? (
     <ActiveWorkout key={state.workout.id} workout={state.workout} />
   ) : (
-    <Start profileId={active.id} onOpenPlan={onOpenPlan} />
+    <Start profileId={active.id} onOpenRegime={onOpenRegime} />
   )
 }
 
-function Start({ profileId, onOpenPlan }: { profileId: number; onOpenPlan: () => void }) {
-  const { active } = useProfile()
+function Start({ profileId, onOpenRegime }: { profileId: number; onOpenRegime: () => void }) {
   const recent = useLiveQuery(
     async () => {
       const done = (await db.workouts.where('profileId').equals(profileId).filter((w) => !!w.finishedAt).toArray())
@@ -43,43 +42,13 @@ function Start({ profileId, onOpenPlan }: { profileId: number; onOpenPlan: () =>
     [profileId],
     [],
   )
-  const routines = useLiveQuery(() => db.routines.where('profileId').equals(profileId).sortBy('createdAt'), [profileId], [] as Routine[])
-  const now = useNow(60_000)
-  const todayId = active?.schedule?.[weekdayIndex(new Date(now))] ?? null
-  const ordered = [...routines].sort((a, b) => Number(b.id === todayId) - Number(a.id === todayId))
-
   return (
     <>
-      <PageHeader eyebrow="Log" title="Workout" />
-      {routines.length > 0 ? (
-        <>
-          <h2 className="section" style={{ marginTop: 4 }}>Start a routine</h2>
-          <div className="group">
-            {ordered.map((r) => (
-              <button key={r.id} className="group-row routine" onClick={() => startFromRoutine(profileId, r.id)}>
-                <span className="two-line">
-                  <span className="name">{r.name}</span>
-                  <span className="sub">{plural(r.items.length, 'exercise')}{r.label && ` · ${r.label}`}</span>
-                </span>
-                {r.id === todayId && <span className="badge on">Today</span>}
-                <span className="chev"><Icon name="chevronRight" size={20} /></span>
-              </button>
-            ))}
-          </div>
-          <button className="btn secondary" onClick={() => startWorkout(profileId)}>Quick log (empty workout)</button>
-        </>
-      ) : (
-        <section className="card hero">
-          <span className="pill neutral">Quick log</span>
-          <h2>Start a workout</h2>
-          <p className="sub">Add exercises as you go, or build routines to start from.</p>
-          <button className="btn" onClick={() => startWorkout(profileId)}>Start workout</button>
-          <button className="btn-text" style={{ width: '100%', marginTop: 8 }} onClick={onOpenPlan}>Build your routines</button>
-        </section>
-      )}
+      <PageHeader eyebrow="Log" title="New session" />
+      <WorkoutChooser onOpenRegime={onOpenRegime} />
       {recent.length > 0 && (
         <>
-          <h2 className="section">Recent</h2>
+          <h2 className="section">Recent sessions</h2>
           <div className="group">
             {recent.map(({ w, sets }) => (
               <div key={w.id} className="group-row recent">
@@ -100,7 +69,8 @@ function Start({ profileId, onOpenPlan }: { profileId: number; onOpenPlan: () =>
 const REST_OPTIONS = [60, 90, 120, 180, 240, 300]
 
 function ActiveWorkout({ workout }: { workout: Workout }) {
-  const [picking, setPicking] = useState(false)
+  // Picker: add a new exercise, or replace one (session only; the preset is untouched).
+  const [picking, setPicking] = useState<{ replace?: Exercise } | null>(null)
   const [confirm, setConfirm] = useState<'finish' | 'discard' | null>(null)
   const [restEndsAt, setRestEndsAt] = useState<number | null>(null)
   const [auto, setAuto] = usePersisted('gymtracker.restAuto', false)
@@ -139,13 +109,16 @@ function ActiveWorkout({ workout }: { workout: Workout }) {
   }, [auto, restSec])
 
   if (picking) {
+    const { replace } = picking
     return (
       <ExercisePicker
+        title={replace ? `Replace ${replace.name}` : 'Add exercise'}
         excludeIds={workout.exerciseIds}
-        onClose={() => setPicking(false)}
+        onClose={() => setPicking(null)}
         onPick={async (e) => {
-          await addExercise(workout.id, e.id)
-          setPicking(false)
+          if (replace) await replaceExercise(workout.id, replace.id, e.id)
+          else await addExercise(workout.id, e.id)
+          setPicking(null)
         }}
       />
     )
@@ -191,13 +164,14 @@ function ActiveWorkout({ workout }: { workout: Workout }) {
           onLogged={onLogged}
           target={slotFor(e.id)}
           variants={variantsFor(e.id)}
-          onSwap={(toId) => void swapVariant(workout.id, e.id, toId)}
+          onSwap={(toId) => void replaceExercise(workout.id, e.id, toId)}
+          onReplace={() => setPicking({ replace: e })}
         />
       ))}
 
       {exercises.length === 0 && <p className="empty">Add your first exercise to start logging.</p>}
 
-      <button className="btn secondary" onClick={() => setPicking(true)}>+ Add exercise</button>
+      <button className="btn secondary" onClick={() => setPicking({})}>+ Add exercise</button>
 
       <div className="btn-row" style={{ marginTop: 24 }}>
         {confirm === 'discard' ? (

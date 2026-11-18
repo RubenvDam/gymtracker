@@ -11,10 +11,10 @@ Every feature should serve one of these three. Long term (not now): import from 
 A personal gym tracker, installed on iPhone as a PWA. Log sets fast at the gym, then see progression and which muscles are under-trained. Used by the owner and a workout buddy on the same phone.
 
 ## Navigation
-- **Today**: week strip, today's planned session (when a plan exists), start/continue, weekly stats.
-- **Log**: quick workout or (later) start from a preset routine; active workout screen.
+- **Today**: week strip, choose a workout or quick log (or continue the running session), weekly goal + streak.
+- **Log**: same chooser + recent sessions; the active session screen.
 - **Progress**: personal bests, "since you started" deltas; later insights, body map, charts, achievements.
-- **Profile**: routines + weekly schedule (plan builder), body metrics, exercise library, profiles, appearance settings.
+- **Profile**: regime (preset workouts + weekly goal), body metrics, exercise library, profiles, appearance settings.
 
 ## Principles
 - Offline-first, all data on-device (IndexedDB). No backend, no accounts.
@@ -43,23 +43,21 @@ A personal gym tracker, installed on iPhone as a PWA. Log sets fast at the gym, 
 - Rest timer: optional. Off by default; toggle to auto-start after each logged set, or start manually. Duration selectable (1–5 min), settings remembered.
 - Input: typed numbers plus ± buttons (2.5 kg, 1 rep, 5 s). Decimal comma accepted.
 
-## Plans: structure on top of free logging
-Principle: the plan is a suggestion layer, never a gate. Quick (unplanned) workouts are first-class and count toward all insights.
+## Regime: structure on top of free logging
+Terminology: **workout** = a preset (e.g. "Lower A"); **regime** = a profile's set of workouts + weekly goal; **session** = what you log on a day.
 
-- **Session templates** per profile, e.g. "Upper – Strength", "Upper – Volume", "Lower – Strength", "Lower – Volume". Exercises usually differ between strength and volume days.
-- Each template has a **focus**: `strength` (heavy, low reps, long rest) or `volume` (moderate/high reps). Focus sets defaults for new items (strength ≈ 4 × 4–6, 3 min rest; volume ≈ 3 × 8–12, 90 s rest), all editable.
-- Template item: exercise, target sets, rep range (or duration range), optional note, optional rest override.
-- **Alternatives (variants)** per item, e.g. machine / dumbbell / cable. Each variant is its own exercise with its own history and prefill; while logging, a toggle switches variant (locked once a set is logged). Starting a routine picks the variant used most recently.
-- Template "Upper / Lower · 4 days" (`src/db/templates.ts`) holds the owner's plan; any profile can apply it.
-- **Weekly schedule** on fixed weekdays (e.g. Mon Upper-S, Tue Lower-S, Thu Upper-V, Fri Lower-V). Missed sessions are never punished: "move to today" or skip.
-- **Built in Profile** ("Routines & weekly plan"): create routines, give them a name and label (e.g. focus), assign to weekdays.
-- **Calendar**: week strip on Today + month view; shows planned, done, missed and unplanned workouts.
-- **Today screen**: aligned to the schedule: today's planned session → Start; always a "Quick log" alternative. A quick workout can be linked to a planned session afterwards.
-- **Log**: pick one of your preset routines, or quick log.
-- Starting from a template preloads exercises with targets shown per set.
+Principle: flexibility. Not tied to weekdays; the user **chooses every time** what to train. Some weeks you get 3 of 4 in, and that's fine.
+
+- **Regime** (Profile → Regime): preset workouts + **weekly goal** (sessions per week) + **streak minimum** (a week with at least this many sessions keeps the streak). Template default: goal 4, streak from 3.
+- **Workouts**: name, free-text label (suggestions: Strength, Volume, Endurance, Deload), items. Item: exercise, target sets, rep range (or seconds), optional note. New items default by label (strength ≈ 4 × 4–6, otherwise 3 × 8–12).
+- **Alternatives (variants)** per item, e.g. machine / dumbbell / cable. Each variant is its own exercise with its own history and prefill; while logging, a toggle switches variant (locked once a set is logged). Starting a workout picks the variant used most recently.
+- Template "Upper / Lower · 4 a week" (`src/db/templates.ts`) holds the owner's four workouts; any profile can apply it.
+- **Choosing** (Today and Log): a card listing all workouts, nothing pre-selected. Workouts done this week show a tick with the day. Plus **Quick log** (pick exercises yourself). Shows "x / goal this week · n to go".
+- **During a session**: preset exercises preloaded with targets; add, remove and **replace** exercises freely (replace until a set is logged). Session edits never change the preset.
+- **Accountability**: "This week x / goal" tile and a **streak** of consecutive weeks reaching the streak minimum. The current week doesn't break the streak until it's over; a short week is shown neutrally, never as failure.
 - **Progression hints** (double progression): last session hit the top of the rep range on all target sets at the same weight → prefill weight + step at the bottom of the range, with a hint. Step: +5 kg for barbell/machine quad/hamstring/glute work, +2.5 kg otherwise. Applies to weight × reps and bodyweight + added kg; not to durations.
-- Plans are per profile. "Copy plan from another profile" so a buddy following the same plan sets up in one tap.
-- Later: mesocycles / deload weeks (model must not block this).
+- Regimes are per profile. "Copy {name}'s regime" so a buddy following the same plan sets up in one tap.
+- Later: month calendar/history view; multiple regimes (switch programme); mesocycles / deload weeks.
 
 ## Profile metrics
 - Fixed: birth date (→ age), height, optional sex (only for strength standards).
@@ -81,11 +79,11 @@ Principle: the plan is a suggestion layer, never a gate. Quick (unplanned) worko
 - Extras: calendar heatmap, bodyweight log with trend, plate calculator.
 
 ## Data model (draft)
-- Profile { id, name, birthDate?, heightCm?, sex? }
+- Profile { id, name, weeklyGoal?, streakMin?, birthDate?, heightCm?, sex? }
 - Exercise { id, name, logType, primaryMuscles[], secondaryMuscles[], equipment, custom }
-- Routine { id, profileId, name, label, createdAt, items[{ key, exerciseIds[] (first = default, rest = alternatives), sets, repMin, repMax, note? }] }
-- Profile.schedule: (routineId | null)[7], Monday first
-- Workout { id, profileId, name, startedAt, finishedAt?, exerciseIds[], routineId? } (finishedAt unset = in progress; one per profile)
+- Routine (UI: "workout" preset) { id, profileId, name, label, createdAt, items[{ key, exerciseIds[] (first = default, rest = alternatives), sets, repMin, repMax, note? }] }
+- Workout (UI: "session") { id, profileId, name, startedAt, finishedAt?, exerciseIds[], routineId? } (finishedAt unset = in progress; one per profile)
+- (v4 had Profile.schedule = weekday plan; migrated in v5 to weeklyGoal = number of planned days, streakMin = min(3, goal).)
 - SetEntry { id, workoutId, profileId, exerciseId, order, type, weightKg?, reps?, durationSec?, completedAt, rpe?, note? }
 - BodyweightEntry { id, profileId, date, kg }
 
@@ -94,7 +92,7 @@ Principle: the plan is a suggestion layer, never a gate. Quick (unplanned) worko
 2. Exercise library + profiles. ✅ done
 3. Workout logging (3 log types) + prefill. ✅ done
 4. Design system + restyle + new navigation (Today · Log · Progress · Profile) + appearance settings + first personal-bests view. ✅ done
-5. Plans (built under Profile): routines with label/focus, weekly schedule, calendar, start from routine in Log, Today aligned to schedule, progression hints, copy plan. ✅ done (month calendar view and "move missed session to today" still open)
+5. Regime (built under Profile): preset workouts with label, alternatives, weekly goal + streak, choose-every-time on Today/Log, session edits (add/remove/replace), progression hints, copy regime. ✅ done (month calendar view still open)
 6. Profile metrics: baseline, bodyweight log, BMI, relative strength.
 7. History + export/import.
 8. Insights: weekly sets per muscle + body map.

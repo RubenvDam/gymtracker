@@ -8,11 +8,12 @@ import PageHeader from '../components/PageHeader'
 import Icon from '../components/Icon'
 import Library from './Library'
 import AppearanceScreen from './Appearance'
-import PlanScreen from './Plan'
+import RegimeScreen from './Regime'
+import { regimeGoals } from '../db/routines'
 
-export type ProfileView = 'main' | 'library' | 'appearance' | 'plan'
+export type ProfileView = 'main' | 'library' | 'appearance' | 'regime'
 
-/** The current sub-view is owned by App so other tabs can deep-link (e.g. Today → plan). */
+/** The current sub-view is owned by App so other tabs can deep-link (e.g. Today → regime). */
 export default function ProfileScreen({ view, onView }: { view: ProfileView; onView: (v: ProfileView) => void }) {
   const open = (v: ProfileView) => {
     onView(v)
@@ -21,14 +22,14 @@ export default function ProfileScreen({ view, onView }: { view: ProfileView; onV
   const back = () => open('main')
   if (view === 'library') return <Library onBack={back} />
   if (view === 'appearance') return <AppearanceScreen onBack={back} />
-  if (view === 'plan') return <PlanScreen onBack={back} />
+  if (view === 'regime') return <RegimeScreen onBack={back} />
   return <ProfileMain onOpen={open} />
 }
 
 function ProfileMain({ onOpen }: { onOpen: (v: ProfileView) => void }) {
   const { profiles, active, setActiveId } = useProfile()
   const routineCount = useLiveQuery(() => (active ? db.routines.where('profileId').equals(active.id).count() : 0), [active?.id], 0)
-  const plannedDays = (active?.schedule ?? []).filter((x) => x !== null).length
+  const { weeklyGoal } = regimeGoals(active, routineCount)
   const [newName, setNewName] = useState('')
   const appearance = loadAppearance()
   const accentLabel = ACCENTS.find((a) => a.id === appearance.accent)?.label
@@ -48,14 +49,14 @@ function ProfileMain({ onOpen }: { onOpen: (v: ProfileView) => void }) {
 
       <h2 className="section">Training</h2>
       <div className="group">
-        <button className="group-row" onClick={() => onOpen('plan')}>
+        <button className="group-row" onClick={() => onOpen('regime')}>
           <span className="row-icon"><Icon name="calendar" size={20} /></span>
           <span className="two-line">
-            <span className="name">Routines & weekly plan</span>
+            <span className="name">Regime</span>
             <span className="sub">
               {routineCount > 0
-                ? `${plural(routineCount, 'routine')} · ${plannedDays} training ${plannedDays === 1 ? 'day' : 'days'} a week`
-                : 'Build routines and assign them to weekdays'}
+                ? `${plural(routineCount, 'workout')} · goal ${weeklyGoal} a week`
+                : 'Preset workouts and a weekly goal'}
             </span>
           </span>
           <span className="chev"><Icon name="chevronRight" size={20} /></span>

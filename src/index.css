@@ -176,12 +176,11 @@ legend { font-size: 13px; font-weight: 600; color: var(--muted); padding: 0; mar
 .dot.done { background: var(--accent); color: var(--on-accent); border-color: transparent; }
 .dot.today { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--text); }
 .dot.past { background: transparent; color: var(--muted); }
-.dot.planned { position: relative; }
-.dot.planned::after { content: ''; position: absolute; bottom: 4px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent-solid); }
-.ex-preview { list-style: none; margin: 0 0 16px; padding: 0; }
-.ex-preview li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); font-size: 15px; }
-.ex-preview li span:last-child { color: var(--muted); font-variant-numeric: tabular-nums; flex: none; }
-.ex-preview li.more { color: var(--muted); font-size: 14px; }
+.choices { margin: 0 0 14px; }
+.choice { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 58px; padding: 10px 2px; background: none; border: 0; border-top: 1px solid var(--border); text-align: left; font-size: 16px; color: var(--text); }
+.choice .name { font-weight: 600; }
+.start-arrow { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--on-accent); flex: none; }
+.badge.done { display: inline-flex; align-items: center; gap: 3px; color: var(--positive); background: color-mix(in srgb, var(--positive) 12%, transparent); }
 .pill.positive { color: var(--positive); background: color-mix(in srgb, var(--positive) 12%, transparent); }
 .btn-text.full { width: 100%; margin-top: 6px; }
 .bar { height: 6px; border-radius: 999px; background: var(--surface-2); margin-top: 12px; overflow: hidden; }
@@ -192,6 +191,7 @@ legend { font-size: 13px; font-weight: 600; color: var(--muted); padding: 0; mar
    ========================================================================= */
 .ex-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
 .ex-head h3 { font-size: 18px; letter-spacing: -0.01em; }
+.card-actions { display: flex; gap: 6px; flex: none; }
 .sets { list-style: none; margin: 12px 0 4px; padding: 0; }
 .sets li { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-top: 1px solid var(--border); font-size: 16px; font-variant-numeric: tabular-nums; }
 .tag { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-2); font-size: 13px; font-weight: 700; flex: none; }
@@ -224,7 +224,10 @@ legend { font-size: 13px; font-weight: 600; color: var(--muted); padding: 0; mar
 .note-input:not([type='checkbox']) { font-size: 15px; padding: 10px 12px; }
 .chip.alt { display: inline-flex; align-items: center; gap: 6px; padding-right: 6px; font-weight: 500; white-space: normal; }
 .chip.alt button { border: 0; background: var(--surface-2); border-radius: 50%; width: 22px; height: 22px; display: grid; place-items: center; color: var(--muted); padding: 0; }
-.group-row select.inline-select { width: auto; flex: none; background: transparent; border: 0; padding: 6px 4px; color: var(--accent-text); font-weight: 600; text-align: right; }
+.counter { display: flex; align-items: center; gap: 4px; flex: none; background: var(--surface-2); border-radius: 12px; padding: 3px; }
+.counter button { width: 34px; height: 34px; border: 0; border-radius: 9px; background: var(--surface); font-size: 20px; box-shadow: var(--shadow); }
+.counter button:disabled { opacity: 0.35; }
+.counter output { min-width: 26px; text-align: center; font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
 
 .rest-card { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .rest-card .controls { display: flex; gap: 8px; width: 100%; }

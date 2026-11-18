@@ -1,4 +1,4 @@
-/** Ready-made plans a profile can start from. Exercise ids refer to public/exercises.json. */
+/** Ready-made regimes a profile can start from. Exercise ids refer to public/exercises.json. */
 export interface TemplateItem {
   /** First id is the default; the rest are alternatives (e.g. machine / dumbbell / cable). */
   ids: string[]
@@ -19,16 +19,17 @@ export interface PlanTemplate {
   name: string
   description: string
   routines: TemplateRoutine[]
-  /** Monday … Sunday: routine key or null for rest. */
-  schedule: (string | null)[]
+  weeklyGoal: number
+  streakMin: number
 }
 
 export const PLAN_TEMPLATES: PlanTemplate[] = [
   {
     id: 'upper-lower-4',
-    name: 'Upper / Lower · 4 days',
-    description: 'A days focus on weight (strength), B days on reps (volume). Mon Lower A, Tue Upper A, Thu Lower B, Fri Upper B.',
-    schedule: ['LA', 'UA', null, 'LB', 'UB', null, null],
+    name: 'Upper / Lower · 4 a week',
+    description: 'Lower A, Upper A, Lower B, Upper B. A workouts focus on weight (strength), B workouts on reps (volume). Goal: 4 sessions a week.',
+    weeklyGoal: 4,
+    streakMin: 3,
     routines: [
       {
         key: 'LA',

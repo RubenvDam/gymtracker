@@ -9,7 +9,7 @@ import Icon from '../components/Icon'
 
 type Picking = { mode: 'add' } | { mode: 'alt'; key: string } | null
 
-/** Edits a routine in local state and autosaves every change. */
+/** Edits a preset workout (Routine) in local state and autosaves every change. */
 export default function RoutineEditor({ initial, onBack }: { initial: Routine; onBack: () => void }) {
   const [r, setR] = useState<Routine>(initial)
   const [picking, setPicking] = useState<Picking>(null)
@@ -62,7 +62,7 @@ export default function RoutineEditor({ initial, onBack }: { initial: Routine; o
 
   return (
     <>
-      <PageHeader eyebrow="Routine" title={r.name || 'Untitled'} onBack={onBack} />
+      <PageHeader eyebrow="Preset workout" title={r.name || 'Untitled'} onBack={onBack} />
 
       <section className="card">
         <label className="field" style={{ marginTop: 0 }}>
@@ -135,11 +135,11 @@ export default function RoutineEditor({ initial, onBack }: { initial: Routine; o
       <div className="btn-row" style={{ marginTop: 28 }}>
         {confirmDelete ? (
           <>
-            <button className="btn danger" onClick={async () => { await deleteRoutine(r.id); onBack() }}>Yes, delete routine</button>
+            <button className="btn danger" onClick={async () => { await deleteRoutine(r.id); onBack() }}>Yes, delete workout</button>
             <button className="btn secondary inline" onClick={() => setConfirmDelete(false)}>Cancel</button>
           </>
         ) : (
-          <button className="btn-text danger" style={{ width: '100%' }} onClick={() => setConfirmDelete(true)}>Delete routine</button>
+          <button className="btn-text danger" style={{ width: '100%' }} onClick={() => setConfirmDelete(true)}>Delete workout</button>
         )}
       </div>
     </>

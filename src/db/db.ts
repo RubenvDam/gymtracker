@@ -18,9 +18,18 @@ export type Muscle = (typeof MUSCLES)[number]
 export interface Profile {
   id: number
   name: string
-  /** Weekly plan: index 0 = Monday … 6 = Sunday; routine id or null for rest. */
+  /** Regime: target sessions per week. */
+  weeklyGoal?: number
+  /** Regime: a week counts toward the streak with at least this many sessions. */
+  streakMin?: number
+  /** @deprecated v4 weekday plan; migrated to weeklyGoal in v5. */
   schedule?: (number | null)[]
 }
+
+/**
+ * Naming: in the UI a Routine is a "workout" (a preset like "Lower A"), the set of a profile's
+ * routines plus its weekly goal is the "regime", and a logged Workout row is a "session".
+ */
 
 /** One slot in a routine. `exerciseIds[0]` is the default; the rest are alternatives (e.g. machine/DB/cable). */
 export interface RoutineItem {
@@ -115,6 +124,26 @@ db.version(4).stores({
   sets: '++id, workoutId, [profileId+exerciseId]',
   routines: '++id, profileId',
 })
+
+// v5: fixed weekdays → flexible regime. The number of planned days becomes the weekly goal.
+db.version(5)
+  .stores({
+    profiles: '++id, name',
+    exercises: 'id, name, logType, *primaryMuscles',
+    workouts: '++id, profileId, startedAt',
+    sets: '++id, workoutId, [profileId+exerciseId]',
+    routines: '++id, profileId',
+  })
+  .upgrade((tx) =>
+    tx.table('profiles').toCollection().modify((p: Profile) => {
+      const planned = (p.schedule ?? []).filter((x) => x !== null).length
+      if (planned && p.weeklyGoal === undefined) {
+        p.weeklyGoal = planned
+        p.streakMin = Math.min(3, planned)
+      }
+      delete p.schedule
+    }),
+  )
 
 export async function ensureDefaultProfiles() {
   if ((await db.profiles.count()) === 0) {

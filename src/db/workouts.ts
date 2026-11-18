@@ -27,6 +27,17 @@ export async function removeExercise(workoutId: number, exerciseId: string) {
   })
 }
 
+/** Replace an exercise in this session only (the preset is untouched). Only before any set is logged on it. */
+export async function replaceExercise(workoutId: number, fromId: string, toId: string): Promise<boolean> {
+  return db.transaction('rw', db.workouts, db.sets, async () => {
+    const logged = await db.sets.where('workoutId').equals(workoutId).filter((s) => s.exerciseId === fromId).count()
+    const w = await db.workouts.get(workoutId)
+    if (logged > 0 || !w || w.exerciseIds.includes(toId)) return false
+    await db.workouts.update(workoutId, { exerciseIds: w.exerciseIds.map((id) => (id === fromId ? toId : id)) })
+    return true
+  })
+}
+
 export interface NewSet {
   workoutId: number
   profileId: number

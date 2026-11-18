@@ -1,6 +1,23 @@
 import Dexie from 'dexie'
 import { db, type Exercise, type SetEntry } from '../db/db'
 import { describeSet, fmtClock, fmtNum } from './format'
+import { addDays, startOfWeek } from './dates'
+
+/**
+ * Consecutive weeks (Mon–Sun) with at least `min` sessions. The current week counts once it
+ * reaches `min`; until then it doesn't break the streak, so the count runs from last week.
+ */
+export function weeksOnTrack(sessionStarts: number[], min: number, now: Date): number {
+  const counts = new Map<number, number>()
+  for (const t of sessionStarts) {
+    const k = startOfWeek(new Date(t)).getTime()
+    counts.set(k, (counts.get(k) ?? 0) + 1)
+  }
+  const thisWeek = startOfWeek(now)
+  let streak = (counts.get(thisWeek.getTime()) ?? 0) >= min ? 1 : 0
+  for (let wk = addDays(thisWeek, -7); (counts.get(wk.getTime()) ?? 0) >= min; wk = addDays(wk, -7)) streak++
+  return streak
+}
 
 /** Epley estimated one-rep max. A single is its own 1RM. */
 export const e1rm = (kg: number, reps: number) => (reps <= 1 ? kg : kg * (1 + reps / 30))

@@ -16,6 +16,8 @@ interface Props {
   /** All variants for this slot (including the current one), when the slot has alternatives. */
   variants?: Exercise[]
   onSwap?: (toId: string) => void
+  /** Open a picker to replace this exercise for this session. Offered until a set is logged. */
+  onReplace?: () => void
 }
 
 const BIG_LOWER: Muscle[] = ['quadriceps', 'hamstrings', 'glutes']
@@ -34,7 +36,7 @@ function variantLabel(v: Exercise, all: Exercise[]) {
   return rest.join(' ') || v.name
 }
 
-export default function ExerciseCard({ workout, exercise, onLogged, target, variants, onSwap }: Props) {
+export default function ExerciseCard({ workout, exercise, onLogged, target, variants, onSwap, onReplace }: Props) {
   const { logType } = exercise
   const sets = useLiveQuery(
     () => db.sets.where('workoutId').equals(workout.id).filter((s) => s.exerciseId === exercise.id).sortBy('order'),
@@ -108,11 +110,20 @@ export default function ExerciseCard({ workout, exercise, onLogged, target, vari
             <span className="sub">{exercise.primaryMuscles.map(cap).join(', ')}</span>
           )}
         </div>
-        {confirmRemove ? (
-          <button className="btn-text danger" onClick={() => removeExercise(workout.id, exercise.id)}>Remove + its sets?</button>
-        ) : (
-          <button className="btn-text muted" onClick={() => setConfirmRemove(true)} aria-label={`Remove ${exercise.name}`}>Remove</button>
-        )}
+        <div className="card-actions">
+          {confirmRemove ? (
+            <button className="btn-text danger" onClick={() => removeExercise(workout.id, exercise.id)}>
+              {sets.length ? 'Remove + its sets?' : 'Remove?'}
+            </button>
+          ) : (
+            <>
+              {onReplace && sets.length === 0 && (
+                <button className="btn-text muted" onClick={onReplace} aria-label={`Replace ${exercise.name}`}>Replace</button>
+              )}
+              <button className="btn-text muted" onClick={() => setConfirmRemove(true)} aria-label={`Remove ${exercise.name}`}>Remove</button>
+            </>
+          )}
+        </div>
       </div>
 
       {sets.length > 0 && (
