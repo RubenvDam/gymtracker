@@ -8,7 +8,7 @@ A personal gym tracker, installed on iPhone as a PWA. Log sets fast at the gym, 
 - Minimum taps to log a set. Prefill from last session.
 - Units: kg.
 - One-handed, mobile-first, dark mode friendly.
-- Every record carries `profileId` so a real backend/login can be added later without a data-model change.
+- Logged data carries `profileId` so a real backend/login can be added later without a data-model change.
 
 ## Profiles
 - Profile switcher ("You" / "Buddy"), separate history per profile.
@@ -50,8 +50,8 @@ A personal gym tracker, installed on iPhone as a PWA. Log sets fast at the gym, 
 - BodyweightEntry { id, profileId, date, kg }
 
 ## Milestones
-1. Scaffold: git, docs, Vite+React+TS PWA, installable on iPhone, deployed.
-2. Exercise library + profiles.
+1. Scaffold: git, docs, Vite+React+TS PWA, installable on iPhone, deployed. ✅ done
+2. Exercise library + profiles. ✅ done
 3. Workout logging (3 log types) + prefill.
 4. Upper/lower templates.
 5. History + export/import. ← first usable version

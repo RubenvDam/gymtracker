@@ -1,35 +1,46 @@
-import { useEffect, useState } from 'react'
-import { db, ensureDefaultProfiles, type Profile } from './db/db'
+import { useState } from 'react'
+import { ProfileProvider } from './profile'
+import { useProfile } from './profileContext'
+import Library from './screens/Library'
+import Profiles from './screens/Profiles'
 
-export default function App() {
-  const [profiles, setProfiles] = useState<Profile[]>([])
-  const [active, setActive] = useState<number | null>(null)
+type Tab = 'workout' | 'library' | 'profiles'
 
-  useEffect(() => {
-    ensureDefaultProfiles()
-      .then(() => db.profiles.toArray())
-      .then((p) => {
-        setProfiles(p)
-        setActive(p[0]?.id ?? null)
-      })
-  }, [])
+function Shell() {
+  const { profiles, active, setActiveId } = useProfile()
+  const [tab, setTab] = useState<Tab>('library')
 
   return (
-    <main>
-      <h1>Gym Tracker</h1>
-      <div className="profiles" role="tablist">
-        {profiles.map((p) => (
-          <button
-            key={p.id}
-            role="tab"
-            aria-selected={p.id === active}
-            onClick={() => setActive(p.id)}
-          >
-            {p.name}
+    <>
+      <header>
+        <div className="profiles" role="tablist" aria-label="Active profile">
+          {profiles.map((p) => (
+            <button key={p.id} role="tab" aria-selected={p.id === active?.id} onClick={() => setActiveId(p.id)}>
+              {p.name}
+            </button>
+          ))}
+        </div>
+      </header>
+      <main>
+        {tab === 'workout' && <p className="muted">Workout logging comes in milestone 3.</p>}
+        {tab === 'library' && <Library />}
+        {tab === 'profiles' && <Profiles />}
+      </main>
+      <nav className="tabbar">
+        {(['workout', 'library', 'profiles'] as Tab[]).map((t) => (
+          <button key={t} aria-current={tab === t} onClick={() => setTab(t)}>
+            {t === 'workout' ? 'Workout' : t === 'library' ? 'Library' : 'Profiles'}
           </button>
         ))}
-      </div>
-      <p>Setup works. Active profile: {profiles.find((p) => p.id === active)?.name ?? '…'}</p>
-    </main>
+      </nav>
+    </>
+  )
+}
+
+export default function App() {
+  return (
+    <ProfileProvider>
+      <Shell />
+    </ProfileProvider>
   )
 }

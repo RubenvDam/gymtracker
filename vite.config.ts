@@ -11,6 +11,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['apple-touch-icon.png'],
+      workbox: { globPatterns: ['**/*.{js,css,html,png,svg,json,webmanifest}'] },
       manifest: {
         name: 'Gym Tracker',
         short_name: 'Gym',
