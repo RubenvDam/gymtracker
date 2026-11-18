@@ -11,7 +11,11 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['apple-touch-icon.png'],
-      workbox: { globPatterns: ['**/*.{js,css,html,png,svg,json,webmanifest}'] },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,png,svg,json,webmanifest}'],
+        // Standalone pages (e.g. design previews) must not be swallowed by the SPA fallback.
+        navigateFallbackDenylist: [/preview\.html$/],
+      },
       manifest: {
         name: 'Gym Tracker',
         short_name: 'Gym',
