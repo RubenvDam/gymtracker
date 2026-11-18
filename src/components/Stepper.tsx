@@ -7,10 +7,12 @@ interface Props {
   step: number
   min?: number
   decimal?: boolean
+  /** "0" suits optional fields; required fields use a dash so an empty field doesn't look filled in. */
+  placeholder?: string
 }
 
 /** Typed number with − / + buttons. Value stays a string so partial input like "7." is allowed. */
-export default function Stepper({ label, value, onChange, step, min = 0, decimal }: Props) {
+export default function Stepper({ label, value, onChange, step, min = 0, decimal, placeholder = '0' }: Props) {
   const bump = (dir: 1 | -1) => {
     const cur = parseNum(value) ?? 0
     onChange(fmtNum(Math.max(min, Math.round((cur + dir * step) * 100) / 100)))
@@ -25,7 +27,7 @@ export default function Stepper({ label, value, onChange, step, min = 0, decimal
           value={value}
           onChange={(e) => onChange(e.target.value)}
           aria-label={label}
-          placeholder="0"
+          placeholder={placeholder}
         />
         <button type="button" aria-label={`Increase ${label}`} onClick={() => bump(1)}>+</button>
       </div>

@@ -18,6 +18,29 @@ export type Muscle = (typeof MUSCLES)[number]
 export interface Profile {
   id: number
   name: string
+  /** Weekly plan: index 0 = Monday … 6 = Sunday; routine id or null for rest. */
+  schedule?: (number | null)[]
+}
+
+/** One slot in a routine. `exerciseIds[0]` is the default; the rest are alternatives (e.g. machine/DB/cable). */
+export interface RoutineItem {
+  key: string
+  exerciseIds: string[]
+  sets: number
+  /** Reps, or seconds for duration exercises. */
+  repMin: number
+  repMax: number
+  note?: string
+}
+
+export interface Routine {
+  id: number
+  profileId: number
+  name: string
+  /** Free text, e.g. "Strength" or "Volume". */
+  label: string
+  items: RoutineItem[]
+  createdAt: number
 }
 
 /** Exercises are a shared library (not per profile). Logged sets are per profile. */
@@ -43,6 +66,8 @@ export interface Workout {
   finishedAt?: number
   /** Exercises in the order they were added. */
   exerciseIds: string[]
+  /** Set when started from a routine. */
+  routineId?: number
 }
 
 export interface SetEntry {
@@ -64,6 +89,7 @@ export const db = new Dexie('gymtracker') as Dexie & {
   exercises: EntityTable<Exercise, 'id'>
   workouts: EntityTable<Workout, 'id'>
   sets: EntityTable<SetEntry, 'id'>
+  routines: EntityTable<Routine, 'id'>
 }
 
 db.version(1).stores({
@@ -82,17 +108,29 @@ db.version(3).stores({
   sets: '++id, workoutId, [profileId+exerciseId]',
 })
 
+db.version(4).stores({
+  profiles: '++id, name',
+  exercises: 'id, name, logType, *primaryMuscles',
+  workouts: '++id, profileId, startedAt',
+  sets: '++id, workoutId, [profileId+exerciseId]',
+  routines: '++id, profileId',
+})
+
 export async function ensureDefaultProfiles() {
   if ((await db.profiles.count()) === 0) {
     await db.profiles.bulkAdd([{ name: 'You' }, { name: 'Buddy' }] as Profile[])
   }
 }
 
-/** Seed the shared library once. Never overwrites rows, so user edits survive. */
+/** Newest library entry. If it's missing, the library file has entries this device doesn't have yet. */
+const LIBRARY_SENTINEL = 'extra-dumbbell-romanian-deadlift'
+
+/** Seed the shared library and add entries from newer versions. Never overwrites rows, so user edits survive. */
 export async function seedExercises() {
-  if ((await db.exercises.filter((e) => !e.custom).count()) > 0) return
+  if (await db.exercises.get(LIBRARY_SENTINEL)) return
   const res = await fetch(`${import.meta.env.BASE_URL}exercises.json`)
   if (!res.ok) throw new Error(`Could not load exercise library (${res.status})`)
   const rows = (await res.json()) as Omit<Exercise, 'custom'>[]
-  await db.exercises.bulkAdd(rows.map((r) => ({ ...r, custom: false })))
+  const existing = new Set(await db.exercises.toCollection().primaryKeys())
+  await db.exercises.bulkAdd(rows.filter((r) => !existing.has(r.id)).map((r) => ({ ...r, custom: false })))
 }

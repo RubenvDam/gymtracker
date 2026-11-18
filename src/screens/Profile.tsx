@@ -1,31 +1,34 @@
 import { useState } from 'react'
+import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/db'
+import { plural } from '../lib/format'
 import { useProfile } from '../profileContext'
 import { ACCENTS, loadAppearance } from '../lib/theme'
 import PageHeader from '../components/PageHeader'
 import Icon from '../components/Icon'
 import Library from './Library'
 import AppearanceScreen from './Appearance'
+import PlanScreen from './Plan'
 
-type View = 'main' | 'library' | 'appearance'
+export type ProfileView = 'main' | 'library' | 'appearance' | 'plan'
 
-export default function ProfileScreen() {
-  const [view, setView] = useState<View>('main')
-  const back = () => {
-    setView('main')
+/** The current sub-view is owned by App so other tabs can deep-link (e.g. Today → plan). */
+export default function ProfileScreen({ view, onView }: { view: ProfileView; onView: (v: ProfileView) => void }) {
+  const open = (v: ProfileView) => {
+    onView(v)
     window.scrollTo(0, 0)
   }
-  const open = (v: View) => {
-    setView(v)
-    window.scrollTo(0, 0)
-  }
+  const back = () => open('main')
   if (view === 'library') return <Library onBack={back} />
   if (view === 'appearance') return <AppearanceScreen onBack={back} />
+  if (view === 'plan') return <PlanScreen onBack={back} />
   return <ProfileMain onOpen={open} />
 }
 
-function ProfileMain({ onOpen }: { onOpen: (v: View) => void }) {
+function ProfileMain({ onOpen }: { onOpen: (v: ProfileView) => void }) {
   const { profiles, active, setActiveId } = useProfile()
+  const routineCount = useLiveQuery(() => (active ? db.routines.where('profileId').equals(active.id).count() : 0), [active?.id], 0)
+  const plannedDays = (active?.schedule ?? []).filter((x) => x !== null).length
   const [newName, setNewName] = useState('')
   const appearance = loadAppearance()
   const accentLabel = ACCENTS.find((a) => a.id === appearance.accent)?.label
@@ -45,13 +48,17 @@ function ProfileMain({ onOpen }: { onOpen: (v: View) => void }) {
 
       <h2 className="section">Training</h2>
       <div className="group">
-        <button className="group-row" disabled>
+        <button className="group-row" onClick={() => onOpen('plan')}>
           <span className="row-icon"><Icon name="calendar" size={20} /></span>
           <span className="two-line">
             <span className="name">Routines & weekly plan</span>
-            <span className="sub">Build routines and assign them to weekdays</span>
+            <span className="sub">
+              {routineCount > 0
+                ? `${plural(routineCount, 'routine')} · ${plannedDays} training ${plannedDays === 1 ? 'day' : 'days'} a week`
+                : 'Build routines and assign them to weekdays'}
+            </span>
           </span>
-          <span className="badge">Next</span>
+          <span className="chev"><Icon name="chevronRight" size={20} /></span>
         </button>
         <button className="group-row" onClick={() => onOpen('library')}>
           <span className="row-icon"><Icon name="dumbbell" size={20} /></span>

@@ -48,14 +48,16 @@ Principle: the plan is a suggestion layer, never a gate. Quick (unplanned) worko
 
 - **Session templates** per profile, e.g. "Upper – Strength", "Upper – Volume", "Lower – Strength", "Lower – Volume". Exercises usually differ between strength and volume days.
 - Each template has a **focus**: `strength` (heavy, low reps, long rest) or `volume` (moderate/high reps). Focus sets defaults for new items (strength ≈ 4 × 4–6, 3 min rest; volume ≈ 3 × 8–12, 90 s rest), all editable.
-- Template item: exercise, target sets, rep range (or duration range), optional rest override.
+- Template item: exercise, target sets, rep range (or duration range), optional note, optional rest override.
+- **Alternatives (variants)** per item, e.g. machine / dumbbell / cable. Each variant is its own exercise with its own history and prefill; while logging, a toggle switches variant (locked once a set is logged). Starting a routine picks the variant used most recently.
+- Template "Upper / Lower · 4 days" (`src/db/templates.ts`) holds the owner's plan; any profile can apply it.
 - **Weekly schedule** on fixed weekdays (e.g. Mon Upper-S, Tue Lower-S, Thu Upper-V, Fri Lower-V). Missed sessions are never punished: "move to today" or skip.
 - **Built in Profile** ("Routines & weekly plan"): create routines, give them a name and label (e.g. focus), assign to weekdays.
 - **Calendar**: week strip on Today + month view; shows planned, done, missed and unplanned workouts.
 - **Today screen**: aligned to the schedule: today's planned session → Start; always a "Quick log" alternative. A quick workout can be linked to a planned session afterwards.
 - **Log**: pick one of your preset routines, or quick log.
 - Starting from a template preloads exercises with targets shown per set.
-- **Progression hints** (double progression): all working sets at top of rep range → suggest next weight (+2.5 kg upper / +5 kg lower, editable). Volume days: reps first, then weight.
+- **Progression hints** (double progression): last session hit the top of the rep range on all target sets at the same weight → prefill weight + step at the bottom of the range, with a hint. Step: +5 kg for barbell/machine quad/hamstring/glute work, +2.5 kg otherwise. Applies to weight × reps and bodyweight + added kg; not to durations.
 - Plans are per profile. "Copy plan from another profile" so a buddy following the same plan sets up in one tap.
 - Later: mesocycles / deload weeks (model must not block this).
 
@@ -81,9 +83,9 @@ Principle: the plan is a suggestion layer, never a gate. Quick (unplanned) worko
 ## Data model (draft)
 - Profile { id, name, birthDate?, heightCm?, sex? }
 - Exercise { id, name, logType, primaryMuscles[], secondaryMuscles[], equipment, custom }
-- Template { id, profileId, name, focus, items[{ exerciseId, targetSets, repMin, repMax, restSec? }] }
-- ScheduleSlot { id, profileId, weekday (0–6), templateId }
-- Workout { id, profileId, name, startedAt, finishedAt?, exerciseIds[], templateId?, plannedDate? } (finishedAt unset = in progress; one per profile)
+- Routine { id, profileId, name, label, createdAt, items[{ key, exerciseIds[] (first = default, rest = alternatives), sets, repMin, repMax, note? }] }
+- Profile.schedule: (routineId | null)[7], Monday first
+- Workout { id, profileId, name, startedAt, finishedAt?, exerciseIds[], routineId? } (finishedAt unset = in progress; one per profile)
 - SetEntry { id, workoutId, profileId, exerciseId, order, type, weightKg?, reps?, durationSec?, completedAt, rpe?, note? }
 - BodyweightEntry { id, profileId, date, kg }
 
@@ -92,7 +94,7 @@ Principle: the plan is a suggestion layer, never a gate. Quick (unplanned) worko
 2. Exercise library + profiles. ✅ done
 3. Workout logging (3 log types) + prefill. ✅ done
 4. Design system + restyle + new navigation (Today · Log · Progress · Profile) + appearance settings + first personal-bests view. ✅ done
-5. Plans (built under Profile): routines with label/focus, weekly schedule, calendar, start from routine in Log, Today aligned to schedule, progression hints, copy plan.
+5. Plans (built under Profile): routines with label/focus, weekly schedule, calendar, start from routine in Log, Today aligned to schedule, progression hints, copy plan. ✅ done (month calendar view and "move missed session to today" still open)
 6. Profile metrics: baseline, bodyweight log, BMI, relative strength.
 7. History + export/import.
 8. Insights: weekly sets per muscle + body map.

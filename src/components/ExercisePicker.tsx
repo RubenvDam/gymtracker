@@ -9,9 +9,10 @@ interface Props {
   excludeIds: string[]
   onPick: (e: Exercise) => void
   onClose: () => void
+  title?: string
 }
 
-export default function ExercisePicker({ excludeIds, onPick, onClose }: Props) {
+export default function ExercisePicker({ excludeIds, onPick, onClose, title = 'Add exercise' }: Props) {
   const [query, setQuery] = useState('')
   const [muscle, setMuscle] = useState<Muscle | null>(null)
   const all = useLiveQuery(() => db.exercises.orderBy('name').toArray(), [], [] as Exercise[])
@@ -25,7 +26,7 @@ export default function ExercisePicker({ excludeIds, onPick, onClose }: Props) {
 
   return (
     <>
-      <PageHeader title="Add exercise" onBack={onClose} />
+      <PageHeader title={title} onBack={onClose} />
       <input type="search" autoFocus placeholder="Search exercises" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search exercises" />
       <div className="chips scroll" role="group" aria-label="Filter by primary muscle">
         <button className={muscle === null ? 'chip on' : 'chip'} onClick={() => setMuscle(null)}>All</button>

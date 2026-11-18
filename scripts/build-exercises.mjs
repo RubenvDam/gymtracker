@@ -32,7 +32,10 @@ out.push(
   { id: 'extra-weighted-dead-hang', name: 'Weighted Dead Hang', logType: 'duration', primaryMuscles: ['forearms'], secondaryMuscles: ['lats', 'shoulders'], equipment: 'other', category: 'strength' },
   { id: 'extra-side-plank', name: 'Side Plank', logType: 'duration', primaryMuscles: ['abdominals'], secondaryMuscles: ['shoulders'], equipment: 'body only', category: 'strength' },
   { id: 'extra-wall-sit', name: 'Wall Sit', logType: 'duration', primaryMuscles: ['quadriceps'], secondaryMuscles: ['glutes', 'calves'], equipment: 'body only', category: 'strength' },
+  { id: 'extra-bulgarian-split-squat', name: 'Bulgarian Split Squat', logType: 'weight_reps', primaryMuscles: ['quadriceps'], secondaryMuscles: ['glutes', 'hamstrings'], equipment: 'dumbbell', category: 'strength' },
+  { id: 'extra-dumbbell-romanian-deadlift', name: 'Dumbbell Romanian Deadlift', logType: 'weight_reps', primaryMuscles: ['hamstrings'], secondaryMuscles: ['glutes', 'lower back'], equipment: 'dumbbell', category: 'strength' },
 )
+// When adding extras, also update LIBRARY_SENTINEL in src/db/db.ts so existing installs pick them up.
 
 fs.writeFileSync('public/exercises.json', JSON.stringify(out))
 const counts = out.reduce((a, e) => ((a[e.logType] = (a[e.logType] ?? 0) + 1), a), {})

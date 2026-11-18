@@ -6,7 +6,7 @@ import Icon, { type IconName } from './components/Icon'
 import Today from './screens/Today'
 import WorkoutScreen from './screens/Workout'
 import Progress from './screens/Progress'
-import ProfileScreen from './screens/Profile'
+import ProfileScreen, { type ProfileView } from './screens/Profile'
 
 type Tab = 'today' | 'log' | 'progress' | 'profile'
 
@@ -33,8 +33,16 @@ function Shell() {
     return () => mq.removeEventListener('change', onChange)
   }, [])
 
+  const [profileView, setProfileView] = useState<ProfileView>('main')
+
   const go = (t: Tab) => {
     setTab(t)
+    if (t === 'profile') setProfileView('main') // tapping the tab returns to its root
+    window.scrollTo(0, 0)
+  }
+  const openPlan = () => {
+    setTab('profile')
+    setProfileView('plan')
     window.scrollTo(0, 0)
   }
 
@@ -43,10 +51,10 @@ function Shell() {
       <div className="statusbar-shim" />
       <main className="page">
         {seedError && <p className="error">{seedError}. Connect to the internet once to load the exercise library.</p>}
-        {tab === 'today' && <Today onOpenLog={() => go('log')} onOpenProgress={() => go('progress')} />}
-        {tab === 'log' && <WorkoutScreen />}
+        {tab === 'today' && <Today onOpenLog={() => go('log')} onOpenProgress={() => go('progress')} onOpenPlan={openPlan} />}
+        {tab === 'log' && <WorkoutScreen onOpenPlan={openPlan} />}
         {tab === 'progress' && <Progress />}
-        {tab === 'profile' && <ProfileScreen />}
+        {tab === 'profile' && <ProfileScreen view={profileView} onView={setProfileView} />}
       </main>
       <nav className="tabbar" aria-label="Main">
         <div className="tabbar-inner">
